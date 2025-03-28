@@ -13,4 +13,6 @@ public interface RentalRepository extends JpaRepository<Rental, Long> {
 
 
     List<Rental> findByUserId(Long userId);
+    // In RentalRepository
+    List<Rental> findByUserEmail(String email);
 }

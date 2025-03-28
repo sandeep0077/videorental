@@ -128,7 +128,7 @@ public class RentalService {
         rental.setReturnDate(LocalDateTime.now());
 
         // Late fee calculation (Assuming 7 days free rental, then $2 per day)
-        long daysRented = ChronoUnit.DAYS.between(rental.getRentalDate() , LocalDate.now());
+        long daysRented = ChronoUnit.DAYS.between(rental.getRentalDate().toLocalDate() , LocalDate.now());
         if(daysRented > 7){
             rental.setLateFee((daysRented - 7) * 2.0);
         }else{
@@ -149,13 +149,23 @@ public class RentalService {
 
         // Retrieve authenticated user by email
         String authEmail = SecurityContextHolder.getContext().getAuthentication().getName();
-        UserDto userDto = userService.findByEmail(authEmail);
 
-        // then we find the rental records of user
-        List<Rental> rentalList = rentalRepository.findByUserId(userDto.getId());
+
+        /**
+         UserDto userDto = userService.findByEmail(authEmail);
+         List<Rental> rentalList = rentalRepository.findByUserId(userDto.getId());
+
+         so below instead of making two db calls for finding userdto, we just added another method in rental service to find rental by userEmail
+         Combine user lookup and rental fetching in one method
+         */
+
+
+        List<Rental> rentalList = rentalRepository.findByUserEmail(authEmail);
 
         //convert this to DTO
-       return rentalList.stream().map(this::mapToDto).toList();
+       return rentalList.stream()
+               .map(this::mapToDto)
+               .toList();
     }
 
     public List<RentalDto> getAllRentals() {

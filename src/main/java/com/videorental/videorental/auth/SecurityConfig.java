@@ -13,23 +13,32 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfiguration;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig  {
 
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())  // Disable CSRF for simplicity (enable if necessary)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(HttpMethod.POST,"/api/auth/register").permitAll()
-                        .requestMatchers("/api/auth/login").authenticated()
-                        .requestMatchers("/api/auth/update/{userId}").authenticated()
+                        .requestMatchers(HttpMethod.POST,"/api/auth/register", "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.PUT,"/api/auth/update/{userId}").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/videos/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/videos/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/videos/**").hasRole("ADMIN")
@@ -37,8 +46,8 @@ public class SecurityConfig  {
                         .requestMatchers(HttpMethod.GET, "/api/rentals/all").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
-                .httpBasic(Customizer.withDefaults());  // Enables Basic Authentication
-        return http.build();
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);  // Enables Basic Authentication
+        return http.build(); // finalizing the Spring Security configuration and returning an instance of SecurityFilterChain
     }
 
     // Expose a PasswordEncoder bean

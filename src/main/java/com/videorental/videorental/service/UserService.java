@@ -55,6 +55,8 @@ public class UserService {
         Users newUser = mapToEntity(userDto);
 
         // encrypt password before saving
+        System.out.println("PasswordEncoder Implementation : " + passwordEncoder.getClass().getName());
+
         newUser.setPassword(passwordEncoder.encode(newUser.getPassword()));
         Users savedUser = userRepository.save(newUser);
         return mapToDto(savedUser);
